@@ -1,0 +1,8 @@
+Theme Summary
+
+Element	Color Code	Description
+Primary Color	#283593	Deep Indigo
+Accent Color	#8C9EFF	Soft, luminous blue
+Background Color	#121212	Dark night-friendly tone
+AppBar Color	#1A237E	Rich navy blue
+Card Background	#1E1E2C	Dark subtle gradient
