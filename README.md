@@ -1,16 +1,32 @@
-# slumberbox
+# 🌙 Slumber Box
 
-A new Flutter project.
+**Slumber Box** is a calming sleep aid app that helps users relax and fall asleep through soothing music and ambient soundscapes. Whether you’re dealing with stress, insomnia, or just want a peaceful end to your day, Slumber Box offers a simple and effective solution.
 
-## Getting Started
+## ✨ Features
 
-This project is a starting point for a Flutter application.
+- 🎶 Curated list of relaxing audio sounds
+- ⏱️ Sleep timer that auto-stops playback
+- 🌌 Beautiful, dark-themed UI
+- 📱 Runs smoothly on both Android and iOS
+- 💤 Designed to enhance your nighttime routine
 
-A few resources to get you started if this is your first Flutter project:
+## 📲 Screenshots
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+> ![Home screen](image-1.png)
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## 🚀 Getting Started
+
+Follow these instructions to set up the project locally.
+
+### Prerequisites
+
+- Flutter SDK ([Install guide](https://flutter.dev/docs/get-started/install))
+- An Android or iOS device/emulator
+
+### Installation
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/your-username/slumber-box.git
+   cd slumber-box
+   ```
