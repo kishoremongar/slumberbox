@@ -1,5 +1,7 @@
+// lib/screens/home_screen.dart
+
+import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:audioplayers/audioplayers.dart';
 
@@ -15,52 +17,52 @@ class _HomeScreenState extends State<HomeScreen> {
     {
       'label': 'Sleeping Music',
       'iconPath': 'assets/icons/sleep.svg',
-      'file': 'assets/sounds/sleeping.m4a',
+      'file': 'sounds/sleeping.m4a',
     },
     {
       'label': 'Thunder',
       'iconPath': 'assets/icons/thunder.svg',
-      'file': 'assets/sounds/thunder.m4a',
+      'file': 'sounds/thunder.m4a',
     },
     {
       'label': 'Bowl',
       'iconPath': 'assets/icons/bowl.svg',
-      'file': 'assets/sounds/singing-bowl.m4a',
+      'file': 'sounds/singing-bowl.aac',
     },
     {
       'label': 'Wave & Seagulls',
       'iconPath': 'assets/icons/wave.svg',
-      'file': 'assets/sounds/wave.m4a',
+      'file': 'sounds/wave.m4a',
     },
     {
       'label': 'Bonfire',
       'iconPath': 'assets/icons/bonfire.svg',
-      'file': 'assets/sounds/firecracker.m4a',
+      'file': 'sounds/firecracker.aac',
     },
     {
       'label': 'Creek',
       'iconPath': 'assets/icons/tree.svg',
-      'file': 'assets/sounds/creek.m4a',
+      'file': 'sounds/creek.m4a',
     },
     {
       'label': 'Frog',
       'iconPath': 'assets/icons/frog-1.svg',
-      'file': 'assets/sounds/frog.m4a',
+      'file': 'sounds/frog.aac',
     },
     {
       'label': 'Bird',
       'iconPath': 'assets/icons/bird.svg',
-      'file': 'assets/sounds/birds.m4a',
+      'file': 'sounds/birds.m4a',
     },
     {
       'label': 'Wind',
       'iconPath': 'assets/icons/wind.svg',
-      'file': 'assets/sounds/wind.m4a',
+      'file': 'sounds/wind.m4a',
     },
     {
       'label': 'Forest',
       'iconPath': 'assets/icons/forest.svg',
-      'file': 'assets/sounds/forest.m4a',
+      'file': 'sounds/forest.m4a',
     },
   ];
 
@@ -70,11 +72,14 @@ class _HomeScreenState extends State<HomeScreen> {
   static const textC = Color(0xFFCDCFD9);
   static const accent = Color(0xFF3B82F6);
   static const trackBg = Color(0xFF1F2937);
+  static const iconColor = Color(0xFF4D5878);
 
   // State: enabled flags, volumes, and AudioPlayers
   late final List<bool> _enabled;
   late final List<double> _volumes;
   late final List<AudioPlayer> _players;
+
+  Timer? _sleepTimer;
 
   @override
   void initState() {
@@ -82,16 +87,39 @@ class _HomeScreenState extends State<HomeScreen> {
     final count = sounds.length;
     _enabled = List<bool>.filled(count, false);
     _volumes = List<double>.filled(count, 0.5);
-    _players = List.generate(count, (_) {
-      final p = AudioPlayer();
-      p.setReleaseMode(ReleaseMode.loop); // loop the sound
-      return p;
+    _players = List.generate(count, (i) {
+      final player = AudioPlayer(playerId: 'player_$i');
+
+      // low-latency looping
+      player.setPlayerMode(PlayerMode.lowLatency);
+      player.setReleaseMode(ReleaseMode.loop);
+
+      // configure audio focus/session
+      player.setAudioContext(
+        AudioContext(
+          android: AudioContextAndroid(
+            isSpeakerphoneOn: true,
+            stayAwake: true,
+            contentType: AndroidContentType.music,
+            usageType: AndroidUsageType.media,
+            audioFocus: AndroidAudioFocus.none,
+          ),
+          iOS: AudioContextIOS(
+            category: AVAudioSessionCategory.playback,
+            options: <AVAudioSessionOptions>{
+              AVAudioSessionOptions.mixWithOthers,
+            },
+          ),
+        ),
+      );
+
+      return player;
     });
   }
 
   @override
   void dispose() {
-    // Dispose all players
+    _sleepTimer?.cancel();
     for (final p in _players) {
       p.dispose();
     }
@@ -100,14 +128,61 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _toggleSound(int i) async {
     if (_enabled[i]) {
-      // Was on → turn off
       await _players[i].stop();
       setState(() => _enabled[i] = false);
     } else {
-      // Was off → turn on & play
       await _players[i].setVolume(_volumes[i]);
-      await _players[i].play(DeviceFileSource(sounds[i]['file']!));
+      await _players[i].play(AssetSource(sounds[i]['file']!));
       setState(() => _enabled[i] = true);
+    }
+  }
+
+  void _stopAllSounds() {
+    if (!mounted) return;
+    for (var i = 0; i < _players.length; i++) {
+      _players[i].stop();
+      _enabled[i] = false;
+    }
+    setState(() {});
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('All sounds stopped')));
+  }
+
+  void _saveMix() {
+    if (!mounted) return;
+    // TODO: persist _enabled & _volumes to local storage
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Mix saved!')));
+  }
+
+  Future<void> _showTimerPicker() async {
+    final minutes = await showModalBottomSheet<int>(
+      context: context,
+      builder:
+          (ctx) => Column(
+            mainAxisSize: MainAxisSize.min,
+            children:
+                [15, 30, 45, 60].map((m) {
+                  return ListTile(
+                    title: Text('$m minutes'),
+                    onTap: () => Navigator.pop(ctx, m),
+                  );
+                }).toList(),
+          ),
+    );
+
+    if (!mounted) return;
+    if (minutes != null) {
+      _sleepTimer?.cancel();
+      _sleepTimer = Timer(Duration(minutes: minutes), () {
+        if (!mounted) return;
+        _stopAllSounds();
+      });
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Timer set for $minutes minutes')));
     }
   }
 
@@ -118,6 +193,12 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         backgroundColor: surface,
         title: const Text('SlumberBox', style: TextStyle(color: textC)),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.timer, color: textC),
+            onPressed: _showTimerPicker,
+          ),
+        ],
       ),
       body: ListView.builder(
         padding: const EdgeInsets.all(12),
@@ -136,11 +217,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 borderRadius: BorderRadius.circular(24),
                 onTap: () => _toggleSound(i),
                 child: SvgPicture.asset(
-                  entry['icon']!,
+                  entry['iconPath']!,
                   width: 32,
                   height: 32,
                   colorFilter: ColorFilter.mode(
-                    _enabled[i] ? accent : trackBg,
+                    _enabled[i] ? accent : iconColor,
                     BlendMode.srcIn,
                   ),
                   placeholderBuilder:
@@ -158,7 +239,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 onChanged:
                     _enabled[i]
                         ? (v) async {
-                          // adjust volume in real time
                           await _players[i].setVolume(v);
                           setState(() => _volumes[i] = v);
                         }
@@ -172,7 +252,22 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       bottomNavigationBar: BottomAppBar(
         color: surface,
-        child: Container(height: 56),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.save, color: textC),
+                onPressed: _saveMix,
+              ),
+              IconButton(
+                icon: const Icon(Icons.stop, color: textC),
+                onPressed: _stopAllSounds,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

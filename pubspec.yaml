@@ -1,5 +1,5 @@
 name: slumberbox
-description: "A new Flutter project."
+description: "A sleep aid app that uses calming music to help users relax and fall asleep."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: "none" # Remove this line if you wish to publish to pub.dev
@@ -48,9 +48,16 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.14.3
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
+# ← App logo
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icons/app_logo.png"
+  remove_alpha_ios: true
 
 # The following section is specific to Flutter packages.
 flutter:
